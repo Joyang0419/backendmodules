@@ -20,7 +20,7 @@ type Config struct {
 	ConnMaxLifeTime time.Duration `mapstructure:"ConnMaxLifeTime" default:"60m"`
 }
 
-func SetupDB(config Config, logLevel logger.LogLevel) (*gorm.DB, error) {
+func SetupDB(config Config, logger logger.Interface) (*gorm.DB, error) {
 	// dataSourceName
 	dsn := fmt.Sprintf(
 		"%s:%s@tcp(%s:%s)/%s?charset=utf8mb4&parseTime=True&loc=UTC",
@@ -31,7 +31,7 @@ func SetupDB(config Config, logLevel logger.LogLevel) (*gorm.DB, error) {
 		config.Database,
 	)
 	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{
-		Logger: logger.Default.LogMode(logLevel),
+		Logger: logger,
 	})
 
 	if err != nil {
