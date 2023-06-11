@@ -1,4 +1,4 @@
-module backendmodules
+module github.com/Joyang0419/backendmodules
 
 go 1.20
 

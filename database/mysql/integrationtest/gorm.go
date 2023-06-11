@@ -4,10 +4,10 @@ import (
 	"log"
 	"time"
 
-	"backendmodules/database/mysql/client"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
 
+	"github.com/Joyang0419/backendmodules/database/mysql/client"
 	"github.com/ory/dockertest"
 )
 
