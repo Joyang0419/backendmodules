@@ -1,6 +1,7 @@
 package integrationtest
 
 import (
+	"io"
 	"log"
 	"time"
 
@@ -8,6 +9,7 @@ import (
 	"gorm.io/gorm/logger"
 
 	"github.com/Joyang0419/backendmodules/database/mysql/client"
+	"github.com/go-sql-driver/mysql"
 	"github.com/ory/dockertest"
 )
 
@@ -37,6 +39,10 @@ func CreateContainer(name string) (*dockertest.Pool, *dockertest.Resource, *gorm
 
 	host, port := GetHostPort(resource, "3306/tcp")
 	// exponential backoff-retry, because the application in the container might not be ready to accept connections yet
+	if err = mysql.SetLogger(log.New(io.Discard, "", log.LstdFlags)); err != nil {
+		log.Fatalf("set logger failed: %v", err)
+	}
+
 	var dbConn *gorm.DB
 	if err = pool.Retry(func() error {
 		var retryErr error
@@ -49,8 +55,8 @@ func CreateContainer(name string) (*dockertest.Pool, *dockertest.Resource, *gorm
 				Database:        "dev",
 				MaxIdleConns:    10,
 				MaxOpenConns:    10,
-				ConnMaxLifeTime: 10 * time.Minute,
-			}, logger.Silent,
+				ConnMaxLifeTime: 60 * time.Second,
+			}, logger.Discard.LogMode(logger.Silent),
 		); retryErr != nil {
 			return retryErr
 		}
@@ -59,8 +65,9 @@ func CreateContainer(name string) (*dockertest.Pool, *dockertest.Resource, *gorm
 	}); err != nil {
 		// You can't defer this because os.Exit doesn't care for defer
 		if errPurge := pool.Purge(resource); errPurge != nil {
-			log.Fatalf("Could not purge resource: %s", err)
+			log.Fatalf("Could not purge resource: %s", errPurge)
 		}
+		log.Fatalf("retry failed: %s", err)
 	}
 
 	return pool, resource, dbConn
